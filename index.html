@@ -86,6 +86,28 @@
 
     .row:last-child { border-bottom: 0; }
 
+    .host-block {
+      border: 1px solid #223143;
+      border-radius: 10px;
+      background: #0e151f;
+      padding: 8px;
+      margin-top: 8px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid #26384d;
+      background: #111a26;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
     .pm-card {
       border: 1px solid #1a2532;
       border-radius: 10px;
@@ -147,15 +169,19 @@
       color: var(--muted);
     }
 
-    .pm-col ul {
+    .pm-col ul,
+    .host-list {
       margin: 0;
       padding-left: 16px;
       font-size: 11px;
       color: #d0dfef;
     }
 
-    .pm-col li { margin-bottom: 4px; }
-    .pm-col li:last-child { margin-bottom: 0; }
+    .pm-col li,
+    .host-list li { margin-bottom: 4px; }
+
+    .pm-col li:last-child,
+    .host-list li:last-child { margin-bottom: 0; }
 
     .muted { color: var(--muted); }
     .ok { color: var(--ok); }
@@ -194,6 +220,40 @@
     </section>
 
     <section class="card">
+      <div class="k">Linux Host Status (Primary)</div>
+      <div class="grid">
+        <div><div class="k">Uptime</div><div id="hostUptime" class="v">—</div></div>
+        <div><div class="k">Load Avg</div><div id="hostLoad" class="v">—</div></div>
+        <div><div class="k">Root Disk</div><div id="hostDisk" class="v">—</div></div>
+        <div><div class="k">Memory</div><div id="hostMemory" class="v">—</div></div>
+        <div><div class="k">Failed Units</div><div id="hostFailedUnits" class="v">—</div></div>
+        <div><div class="k">Reboot Required</div><div id="hostReboot" class="v">—</div></div>
+      </div>
+
+      <div class="host-block">
+        <div class="k">Latest Linux Audit Report</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+          <span id="reportStatus" class="status-pill">—</span>
+          <span id="reportGenerated" class="sub" style="margin-top:0;">—</span>
+        </div>
+        <ul id="reportFindings" class="host-list" style="margin-top:8px;"></ul>
+      </div>
+
+      <div class="host-block">
+        <div class="k">Health Watch Cron</div>
+        <div class="grid" style="margin-top:6px;">
+          <div><div class="k">Configured</div><div id="cronConfigured" class="v">—</div></div>
+          <div><div class="k">Enabled</div><div id="cronEnabled" class="v">—</div></div>
+          <div><div class="k">Schedule</div><div id="cronSchedule" class="v">—</div></div>
+          <div><div class="k">Last Status</div><div id="cronLastStatus" class="v">—</div></div>
+          <div><div class="k">Last Run</div><div id="cronLastRun" class="v">—</div></div>
+          <div><div class="k">Next Run</div><div id="cronNextRun" class="v">—</div></div>
+        </div>
+        <div id="cronLastError" class="sub" style="margin-top:6px;"></div>
+      </div>
+    </section>
+
+    <section class="card">
       <div class="k">Current Projects (All Agents)</div>
       <div id="projectRows"></div>
     </section>
@@ -209,12 +269,12 @@
     </section>
 
     <section class="card">
-      <div class="k">System</div>
+      <div class="k">OpenClaw (Secondary)</div>
       <div class="grid">
         <div><div class="k">OpenClaw</div><div id="version" class="v">—</div></div>
         <div><div class="k">Gateway</div><div id="gateway" class="v">—</div></div>
-        <div><div class="k">Latency</div><div id="latency" class="v">—</div></div>
-        <div><div class="k">Security</div><div id="security" class="v">—</div></div>
+        <div><div class="k">Gateway Latency</div><div id="latency" class="v">—</div></div>
+        <div><div class="k">Security Summary</div><div id="security" class="v">—</div></div>
       </div>
     </section>
 
@@ -266,6 +326,48 @@
       el.textContent = text;
     }
 
+    function statusClass(v) {
+      const s = String(v || '').toUpperCase();
+      if (s === 'OK') return 'ok';
+      if (s === 'WATCH') return 'warn';
+      if (s === 'ALERT' || s === 'ERROR') return 'bad';
+      return 'muted';
+    }
+
+    function renderHost(data) {
+      const host = data.linux || {};
+      $('hostUptime').textContent = host.uptime || '—';
+      $('hostLoad').textContent = host.loadAverage || '—';
+      $('hostDisk').textContent = `${host.rootDisk?.usedPercent ?? '—'}% used · ${host.rootDisk?.free ?? '—'} free`;
+      $('hostMemory').textContent = `${host.memory?.used ?? '—'} used · ${host.memory?.available ?? '—'} avail`;
+      $('hostFailedUnits').textContent = fmtNum(host.failedUnits);
+      $('hostReboot').innerHTML = host.rebootRequired ? '<span class="warn">Yes</span>' : '<span class="ok">No</span>';
+
+      const report = data.latestReport || {};
+      const reportClass = statusClass(report.status);
+      $('reportStatus').className = `status-pill ${reportClass}`;
+      $('reportStatus').textContent = report.status || 'UNKNOWN';
+      $('reportGenerated').textContent = report.generatedAt ? `Generated: ${new Date(report.generatedAt).toLocaleString()}` : 'Generated: —';
+
+      const findings = $('reportFindings');
+      const f = Array.isArray(report.findings) ? report.findings : [];
+      findings.innerHTML = f.length
+        ? f.map((x) => `<li>${esc(x)}</li>`).join('')
+        : '<li>No findings recorded.</li>';
+
+      const cron = data.auditCron || {};
+      $('cronConfigured').innerHTML = cron.configured ? '<span class="ok">Yes</span>' : '<span class="warn">No</span>';
+      $('cronEnabled').innerHTML = cron.enabled ? '<span class="ok">Yes</span>' : '<span class="warn">No</span>';
+      const schedule = cron.scheduleExpr && cron.scheduleTz ? `${cron.scheduleExpr} (${cron.scheduleTz})` : '—';
+      $('cronSchedule').textContent = schedule;
+
+      const lastClass = statusClass(cron.lastStatus);
+      $('cronLastStatus').innerHTML = `<span class="${lastClass}">${esc(cron.lastStatus || '—')}</span>`;
+      $('cronLastRun').textContent = cron.lastRunAt ? new Date(cron.lastRunAt).toLocaleString() : '—';
+      $('cronNextRun').textContent = cron.nextRunAt ? new Date(cron.nextRunAt).toLocaleString() : '—';
+      $('cronLastError').textContent = cron.lastError ? `Last error: ${cron.lastError}` : 'Last error: none';
+    }
+
     function renderProjects(data) {
       const rows = $('projectRows');
       rows.innerHTML = '';
@@ -306,6 +408,7 @@
     function render(data) {
       $('generated').textContent = `Snapshot: ${new Date(data.generatedAt).toLocaleString()}`;
 
+      renderHost(data);
       renderProjects(data);
 
       $('model').textContent = data.assistant?.model ?? '—';

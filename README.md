@@ -7,7 +7,8 @@ Compact dark-mode status panel for Telegram Web App.
 - Phone-first, compact, high-contrast dark theme.
 - No in-page refresh button.
 - Snapshot updates are manual (triggered by ButlerBot request), then published.
-- Top section shows verbose project-management status for every agent (including main): summary, pending, recently completed, issues/watch.
+- **Linux host status is primary** (uptime/load/disk/memory/failed units/reboot + latest host report + health-watch cron status).
+- Top project section shows verbose project-management status for every agent (including main): summary, pending, recently completed, issues/watch.
 
 ## Manual refresh & publish flow
 

@@ -1,6 +1,6 @@
 {
   "schema": "border-bot-status-v1",
-  "generatedAt": "2026-03-01T16:25:59Z",
+  "generatedAt": "2026-03-01T16:35:03Z",
   "updateMode": "manual-request-only",
   "redaction": {
     "note": "Sensitive fields removed before publish.",
@@ -18,10 +18,45 @@
     "model": "gpt-5.3-codex",
     "think": "high",
     "context": {
-      "usedTokens": 126034,
+      "usedTokens": 155264,
       "limitTokens": 272000,
-      "percentUsed": 46
+      "percentUsed": 57
     }
+  },
+  "linux": {
+    "uptime": "up 1 day, 15 hours, 3 minutes",
+    "loadAverage": "0.83, 0.77, 0.63",
+    "rootDisk": {
+      "usedPercent": 21,
+      "free": "82G"
+    },
+    "memory": {
+      "used": "6.4Gi",
+      "available": "9.1Gi"
+    },
+    "failedUnits": 0,
+    "rebootRequired": false,
+    "recentJournalErrors": 82,
+    "recentCifsErrors": 39
+  },
+  "latestReport": {
+    "scope": "linux-host-first",
+    "generatedAt": "2026-03-01T16:35:03Z",
+    "status": "WATCH",
+    "findings": [
+      "Recent journal errors (priority<=3): 82. CIFS-related entries: 39."
+    ]
+  },
+  "auditCron": {
+    "configured": true,
+    "enabled": true,
+    "name": "Daily OpenClaw log + agent health watch",
+    "scheduleExpr": "15 9 * * 5",
+    "scheduleTz": "America/Detroit",
+    "lastStatus": "error",
+    "lastRunAt": "2026-02-27T14:15:00Z",
+    "nextRunAt": "2026-03-06T14:15:00Z",
+    "lastError": "FailoverError: OAuth token refresh failed for openai-codex: Failed to refresh OAuth token for openai-codex. Please try again or re-authenticate."
   },
   "projects": {
     "items": [
@@ -59,7 +94,8 @@
           "Define migration/data strategy from existing DB"
         ],
         "issues": [
-          "Repo/Path Constraint"
+          "Repo/Path Constraint",
+          "- [~] Configure environment and DB connectivity (website/.env created; DB values pending)"
         ]
       },
       {
@@ -74,7 +110,7 @@
         "completed": [
           "Control panel moved to compact dark mobile layout",
           "Manual-update-only snapshot pipeline implemented",
-          "Per-agent project section added to top of page"
+          "Per-agent project cards added to top of page"
         ],
         "issues": [
           "Gateway service currently tied to NVM Node path (upgrade fragility)"
@@ -116,12 +152,10 @@
   },
   "system": {
     "openclawVersion": "2026.2.26",
-    "runtimePlatform": "linux",
     "gateway": {
       "mode": "local",
       "reachable": true,
-      "latencyMs": 113,
-      "serviceState": "running"
+      "latencyMs": 69
     },
     "security": {
       "critical": 0,
@@ -146,12 +180,12 @@
       {
         "id": "main",
         "sessions": 8,
-        "lastActive": "2m ago"
+        "lastActive": "7m ago"
       },
       {
         "id": "socialbot",
         "sessions": 5,
-        "lastActive": "16m ago"
+        "lastActive": "25m ago"
       },
       {
         "id": "tkirschbot",
