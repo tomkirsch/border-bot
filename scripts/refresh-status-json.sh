@@ -4,11 +4,81 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_JSON="${ROOT_DIR}/status.json"
 TMP_JSON="$(mktemp)"
-trap 'rm -f "${TMP_JSON}"' EXIT
+TMP_PROJECT_LINES="$(mktemp)"
+TMP_PROJECTS="$(mktemp)"
+trap 'rm -f "${TMP_JSON}" "${TMP_PROJECT_LINES}" "${TMP_PROJECTS}"' EXIT
 
 openclaw status --json > "${TMP_JSON}"
 
-jq '
+sanitize_text() {
+  local text="$1"
+  text="$(echo "${text}" | sed -E 's#/home/[A-Za-z0-9._/-]+#<path-redacted>#g')"
+  text="$(echo "${text}" | sed -E 's/[[:space:]]+/ /g; s/^ +| +$//g')"
+  echo "${text}"
+}
+
+build_project_statuses() {
+  : > "${TMP_PROJECT_LINES}"
+
+  while IFS=$'\t' read -r agent_id workspace; do
+    [ -n "${agent_id}" ] || continue
+
+    local project=""
+    local status=""
+
+    if [ -f "${workspace}/PROJECT_PLAN.md" ]; then
+      local heading
+      heading="$(grep -m1 '^# ' "${workspace}/PROJECT_PLAN.md" || true)"
+      project="$(echo "${heading}" | sed -E 's/^#\s*PROJECT_PLAN\.md\s*[—-]\s*//; s/^#\s*//')"
+      [ -n "${project}" ] || project="$(basename "${workspace}")"
+
+      local line
+      line="$(grep -m1 '^- \[~\]' "${workspace}/PROJECT_PLAN.md" || true)"
+      if [ -z "${line}" ]; then
+        line="$(grep -m1 '^- \[ \]' "${workspace}/PROJECT_PLAN.md" || true)"
+      fi
+      if [ -z "${line}" ]; then
+        line="$(grep -m1 '^- \[x\]' "${workspace}/PROJECT_PLAN.md" || true)"
+      fi
+      status="$(echo "${line}" | sed -E 's/^- \[[x~ ]\]\s*//')"
+      [ -n "${status}" ] || status="Project plan present"
+    else
+      case "${agent_id}" in
+        main)
+          project="OpenClaw Operations"
+          status="Running control panel + manual Git page snapshot updates"
+          ;;
+        socialbot)
+          project="Social Automation"
+          status="Monitoring social workflow; no single PROJECT_PLAN.md in workspace"
+          ;;
+        tkirschbot)
+          project="CI4 Development Orchestrator"
+          status="Template/orchestration agent baseline active"
+          ;;
+        *)
+          project="$(echo "${agent_id}" | tr '[:lower:]' '[:upper:]')"
+          status="No PROJECT_PLAN.md found; status inferred from workspace baseline"
+          ;;
+      esac
+    fi
+
+    project="$(sanitize_text "${project}")"
+    status="$(sanitize_text "${status}")"
+
+    jq -nc \
+      --arg id "${agent_id}" \
+      --arg project "${project}" \
+      --arg status "${status}" \
+      '{id:$id, project:$project, status:$status}' >> "${TMP_PROJECT_LINES}"
+  done < <(jq -r '.agents.agents[] | [.id, .workspaceDir] | @tsv' "${TMP_JSON}")
+
+  jq -s 'sort_by(.id)' "${TMP_PROJECT_LINES}" > "${TMP_PROJECTS}"
+}
+
+build_project_statuses
+
+jq --argjson projectItems "$(cat "${TMP_PROJECTS}")" '
   def human_age($ms):
     if ($ms == null) then "unknown"
     elif $ms < 60000 then "just now"
@@ -48,6 +118,9 @@ jq '
           limitTokens: ($main.contextTokens // $root.sessions.defaults.contextTokens // null),
           percentUsed: ($main.percentUsed // null)
         }
+      },
+      projects: {
+        items: $projectItems
       },
       system: {
         openclawVersion: ($root.gateway.self.version // "unknown"),

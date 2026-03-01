@@ -1,6 +1,6 @@
 {
   "schema": "border-bot-status-v1",
-  "generatedAt": "2026-03-01T16:11:10Z",
+  "generatedAt": "2026-03-01T16:19:14Z",
   "updateMode": "manual-request-only",
   "redaction": {
     "note": "Sensitive fields removed before publish.",
@@ -18,10 +18,39 @@
     "model": "gpt-5.3-codex",
     "think": "high",
     "context": {
-      "usedTokens": 67636,
+      "usedTokens": 90758,
       "limitTokens": 272000,
-      "percentUsed": 25
+      "percentUsed": 33
     }
+  },
+  "projects": {
+    "items": [
+      {
+        "id": "fernaldbot",
+        "project": "Fernald State School Website - Project Plan",
+        "status": "Audit current routing, controllers, and views for redesign impact"
+      },
+      {
+        "id": "juliabot",
+        "project": "Solis CI4 Rebuild",
+        "status": "Configure environment and DB connectivity (`website/.env` created; DB values pending)"
+      },
+      {
+        "id": "main",
+        "project": "OpenClaw Operations",
+        "status": "Running control panel + manual Git page snapshot updates"
+      },
+      {
+        "id": "socialbot",
+        "project": "Social Automation",
+        "status": "Monitoring social workflow; no single PROJECT_PLAN.md in workspace"
+      },
+      {
+        "id": "tkirschbot",
+        "project": "CI4 Development Orchestrator",
+        "status": "Template/orchestration agent baseline active"
+      }
+    ]
   },
   "system": {
     "openclawVersion": "2026.2.26",
@@ -29,7 +58,7 @@
     "gateway": {
       "mode": "local",
       "reachable": true,
-      "latencyMs": 25,
+      "latencyMs": 68,
       "serviceState": "running"
     },
     "security": {
@@ -55,12 +84,12 @@
       {
         "id": "main",
         "sessions": 8,
-        "lastActive": "3m ago"
+        "lastActive": "4m ago"
       },
       {
         "id": "socialbot",
         "sessions": 5,
-        "lastActive": "1m ago"
+        "lastActive": "9m ago"
       },
       {
         "id": "tkirschbot",

@@ -11,7 +11,6 @@
       --muted: #8ea0b5;
       --text: #eaf1f8;
       --line: #1f2a37;
-      --accent: #3ea6ff;
       --ok: #4ade80;
       --warn: #f59e0b;
       --bad: #f87171;
@@ -28,7 +27,7 @@
     }
 
     .wrap {
-      max-width: 680px;
+      max-width: 760px;
       margin: 0 auto;
       padding: 12px;
       display: grid;
@@ -42,13 +41,6 @@
       padding: 10px;
     }
 
-    .top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
     h1 {
       margin: 0;
       font-size: 15px;
@@ -60,27 +52,6 @@
       margin-top: 2px;
       font-size: 11px;
       color: var(--muted);
-    }
-
-    button {
-      border: 1px solid #245f8e;
-      background: #17344d;
-      color: #d8ecff;
-      border-radius: 9px;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 7px 10px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    button:active { transform: translateY(1px); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
     }
 
     .k {
@@ -97,29 +68,53 @@
       word-break: break-word;
     }
 
-    .pill {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 11px;
-      border: 1px solid var(--line);
-      background: #0e141d;
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 1fr auto auto;
       gap: 8px;
       align-items: center;
       font-size: 12px;
-      padding: 6px 0;
+      padding: 7px 0;
       border-bottom: 1px solid #17202c;
     }
 
     .row:last-child { border-bottom: 0; }
 
-    .muted { color: var(--muted); }
+    .project-row {
+      grid-template-columns: 92px 1fr;
+    }
 
+    .agent-tag {
+      font-size: 11px;
+      color: #d2e8ff;
+      background: #172331;
+      border: 1px solid #27405a;
+      border-radius: 8px;
+      padding: 4px 6px;
+      text-align: center;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+
+    .p-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e5eef8;
+    }
+
+    .p-status {
+      margin-top: 2px;
+      font-size: 12px;
+      color: #bdd0e5;
+    }
+
+    .muted { color: var(--muted); }
     .ok { color: var(--ok); }
     .warn { color: var(--warn); }
     .bad { color: var(--bad); }
@@ -137,26 +132,28 @@
       padding: 8px;
       font-size: 12px;
       display: none;
+      margin-top: 8px;
     }
 
-    @media (max-width: 520px) {
+    @media (max-width: 560px) {
       .grid { grid-template-columns: 1fr; }
-      .row { grid-template-columns: 1fr auto; }
-      .row .muted { display: none; }
+      .project-row { grid-template-columns: 1fr; }
+      .agent-tag { width: fit-content; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="card">
-      <div class="top">
-        <div>
-          <h1>Butler Control Panel</h1>
-          <div id="generated" class="sub">Loading snapshot…</div>
-        </div>
-        <button id="reloadBtn" type="button">Refresh Snapshot</button>
-      </div>
+      <h1>Butler Control Panel</h1>
+      <div id="generated" class="sub">Loading snapshot…</div>
+      <div class="sub">Manual updates only — ask ButlerBot in Telegram to publish new data.</div>
       <div id="error" class="err"></div>
+    </section>
+
+    <section class="card">
+      <div class="k">Current Projects (All Agents)</div>
+      <div id="projectRows"></div>
     </section>
 
     <section class="card">
@@ -189,8 +186,7 @@
     </section>
 
     <section class="foot">
-      Redacted by design: tokens, chat/user IDs, session IDs, filesystem paths, private IPs, and secrets are excluded.
-      Ask ButlerBot in Telegram to publish a new snapshot.
+      Redacted by design: bot tokens, chat/user IDs, session IDs, filesystem paths, private IPs, and auth secrets are excluded.
     </section>
   </main>
 
@@ -213,8 +209,33 @@
       el.textContent = text;
     }
 
+    function renderProjects(data) {
+      const rows = $('projectRows');
+      rows.innerHTML = '';
+      const list = data.projects?.items || [];
+      if (!list.length) {
+        rows.innerHTML = '<div class="row muted">No project status data available.</div>';
+        return;
+      }
+
+      list.forEach((p) => {
+        const row = document.createElement('div');
+        row.className = 'row project-row';
+        row.innerHTML = `
+          <div class="agent-tag">${p.id}</div>
+          <div>
+            <div class="p-name">${p.project || 'Unknown project'}</div>
+            <div class="p-status">${p.status || 'No status'}</div>
+          </div>
+        `;
+        rows.appendChild(row);
+      });
+    }
+
     function render(data) {
-      $('generated').textContent = `Snapshot: ${new Date(data.generatedAt).toLocaleString()} (manual updates)`;
+      $('generated').textContent = `Snapshot: ${new Date(data.generatedAt).toLocaleString()}`;
+
+      renderProjects(data);
 
       $('model').textContent = data.assistant?.model ?? '—';
       $('think').textContent = data.assistant?.think ?? '—';
@@ -238,20 +259,20 @@
       (data.agents?.items || []).forEach((a) => {
         const row = document.createElement('div');
         row.className = 'row';
+        row.style.gridTemplateColumns = '1fr auto auto';
         row.innerHTML = `
           <div><strong>${a.id}</strong></div>
-          <div class="pill">${fmtNum(a.sessions)} sessions</div>
+          <div class="muted">${fmtNum(a.sessions)} sessions</div>
           <div class="muted">${a.lastActive || 'unknown'}</div>
         `;
         rows.appendChild(row);
       });
     }
 
-    async function loadSnapshot(cacheBust = false) {
+    async function loadSnapshot() {
       setError('');
-      const url = cacheBust ? `status.json?t=${Date.now()}` : 'status.json';
       try {
-        const res = await fetch(url, { cache: 'no-store' });
+        const res = await fetch('status.json', { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         render(data);
@@ -260,8 +281,7 @@
       }
     }
 
-    $('reloadBtn').addEventListener('click', () => loadSnapshot(true));
-    loadSnapshot(false);
+    loadSnapshot();
   </script>
 </body>
 </html>

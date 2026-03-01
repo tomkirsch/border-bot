@@ -2,7 +2,14 @@
 
 Compact dark-mode status panel for Telegram Web App.
 
-## Manual refresh flow
+## Design intent
+
+- Phone-first, compact, high-contrast dark theme.
+- No in-page refresh button.
+- Snapshot updates are manual (triggered by ButlerBot request), then published.
+- Top section shows current project status for every agent (including main).
+
+## Manual refresh & publish flow
 
 1. Regenerate redacted snapshot:
 
@@ -19,4 +26,4 @@ git commit -m "Refresh Telegram status panel"
 git push origin main
 ```
 
-No auto updates by design. Snapshot changes only when manually requested.
+No auto updates by design.
