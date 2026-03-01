@@ -1,0 +1,72 @@
+{
+  "schema": "border-bot-status-v1",
+  "generatedAt": "2026-03-01T16:11:10Z",
+  "updateMode": "manual-request-only",
+  "redaction": {
+    "note": "Sensitive fields removed before publish.",
+    "removed": [
+      "bot tokens",
+      "chat/user ids",
+      "session ids",
+      "filesystem paths",
+      "private IP addresses",
+      "auth secrets"
+    ]
+  },
+  "assistant": {
+    "name": "ButlerBot",
+    "model": "gpt-5.3-codex",
+    "think": "high",
+    "context": {
+      "usedTokens": 67636,
+      "limitTokens": 272000,
+      "percentUsed": 25
+    }
+  },
+  "system": {
+    "openclawVersion": "2026.2.26",
+    "runtimePlatform": "linux",
+    "gateway": {
+      "mode": "local",
+      "reachable": true,
+      "latencyMs": 25,
+      "serviceState": "running"
+    },
+    "security": {
+      "critical": 0,
+      "warn": 1,
+      "info": 1
+    }
+  },
+  "agents": {
+    "total": 5,
+    "totalSessions": 18,
+    "items": [
+      {
+        "id": "fernaldbot",
+        "sessions": 1,
+        "lastActive": "10d ago"
+      },
+      {
+        "id": "juliabot",
+        "sessions": 3,
+        "lastActive": "1d ago"
+      },
+      {
+        "id": "main",
+        "sessions": 8,
+        "lastActive": "3m ago"
+      },
+      {
+        "id": "socialbot",
+        "sessions": 5,
+        "lastActive": "1m ago"
+      },
+      {
+        "id": "tkirschbot",
+        "sessions": 1,
+        "lastActive": "1d ago"
+      }
+    ]
+  }
+}

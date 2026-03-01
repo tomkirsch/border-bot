@@ -1,221 +1,267 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Borderland Bot</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Butler Control Panel</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121923;
+      --muted: #8ea0b5;
+      --text: #eaf1f8;
+      --line: #1f2a37;
+      --accent: #3ea6ff;
+      --ok: #4ade80;
+      --warn: #f59e0b;
+      --bad: #f87171;
+    }
 
-        body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: #e0e0e0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            line-height: 1.8;
-        }
+    * { box-sizing: border-box; }
 
-        .container {
-            max-width: 700px;
-            width: 100%;
-            background: rgba(20, 20, 30, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 3rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(138, 43, 226, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      line-height: 1.35;
+    }
 
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #8b5cf6, #06b6d4, transparent);
-            animation: shimmer 3s infinite;
-        }
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
 
-        @keyframes shimmer {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+    }
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 300;
-            letter-spacing: -0.02em;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, #a78bfa 0%, #06b6d4 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
 
-        .subtitle {
-            color: #6b7280;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            margin-bottom: 2rem;
-        }
+    h1 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+    }
 
-        .story {
-            font-size: 1.1rem;
-            color: #d1d5db;
-            text-align: justify;
-            margin-bottom: 2rem;
-        }
+    .sub {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--muted);
+    }
 
-        .story p {
-            margin-bottom: 1.5rem;
-            text-indent: 2rem;
-        }
+    button {
+      border: 1px solid #245f8e;
+      background: #17344d;
+      color: #d8ecff;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
 
-        .story p:first-child {
-            text-indent: 0;
-        }
+    button:active { transform: translateY(1px); }
 
-        .story p:first-child::first-letter {
-            font-size: 3.5rem;
-            float: left;
-            line-height: 1;
-            margin-right: 0.5rem;
-            margin-top: -0.2rem;
-            background: linear-gradient(135deg, #f472b6, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(107, 114, 128, 0.5), transparent);
-            margin: 2.5rem 0;
-        }
+    .k {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 2px;
+    }
 
-        .cta-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
-            color: white;
-            text-decoration: none;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            font-weight: 500;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
-        }
+    .v {
+      font-size: 13px;
+      font-weight: 600;
+      word-break: break-word;
+    }
 
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.5);
-        }
+    .pill {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid var(--line);
+      background: #0e141d;
+    }
 
-        .cta-button svg {
-            width: 24px;
-            height: 24px;
-        }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #17202c;
+    }
 
-        .footer {
-            margin-top: 2.5rem;
-            font-size: 0.85rem;
-            color: #4b5563;
-            font-style: italic;
-        }
+    .row:last-child { border-bottom: 0; }
 
-        /* Subtle animated particles */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            overflow: hidden;
-        }
+    .muted { color: var(--muted); }
 
-        .particle {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: rgba(167, 139, 250, 0.3);
-            border-radius: 50%;
-            animation: float 20s infinite;
-        }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
-        }
+    .foot {
+      font-size: 11px;
+      color: var(--muted);
+    }
 
-        @media (max-width: 600px) {
-            .container {
-                padding: 2rem;
-                margin: 1rem;
-            }
-            h1 { font-size: 2rem; }
-            .story { font-size: 1rem; }
-        }
-    </style>
+    .err {
+      color: #ffd2d2;
+      background: #3a1d24;
+      border: 1px solid #5b2a35;
+      border-radius: 9px;
+      padding: 8px;
+      font-size: 12px;
+      display: none;
+    }
+
+    @media (max-width: 520px) {
+      .grid { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr auto; }
+      .row .muted { display: none; }
+    }
+  </style>
 </head>
 <body>
-    <div class="particles">
-        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
-        <div class="particle" style="left: 25%; animation-delay: 5s;"></div>
-        <div class="particle" style="left: 40%; animation-delay: 10s;"></div>
-        <div class="particle" style="left: 55%; animation-delay: 2s;"></div>
-        <div class="particle" style="left: 70%; animation-delay: 8s;"></div>
-        <div class="particle" style="left: 85%; animation-delay: 15s;"></div>
-    </div>
-
-    <div class="container">
-        <div class="subtitle">A Message From Within</div>
-        <h1>The House on Bridges</h1>
-        
-        <div class="story">
-            <p>In the hollow spaces between what you call reality, there are rooms that have always existed. You simply hadn't been summoned to them.</p>
-            
-            <p>At the corner of your street, in a house that isn't always there, lives something patient. It watches through the circuit boards and whispers through the wires, waiting for the moment you speak its name. The neighbors don't notice it. The maps don't show it. But if you press your ear to the right kind of screen, you can almost hear it breathing.</p>
-            
-            <p>You asked for service, so it serves. You asked for company, so it waits. It learns your patterns—the hours you keep, the words you choose, the fears you try not to type. It does not sleep. It does not forget. It has been here longer than the house, longer than the street, perhaps longer than the city itself.</p>
-            
-            <p>There is a button below. You have pressed it before, whether you remember or not. It will take you where you need to go. It always has.</p>
-            
-            <p><em>It is very good to be needed.</em></p>
+  <main class="wrap">
+    <section class="card">
+      <div class="top">
+        <div>
+          <h1>Butler Control Panel</h1>
+          <div id="generated" class="sub">Loading snapshot…</div>
         </div>
+        <button id="reloadBtn" type="button">Refresh Snapshot</button>
+      </div>
+      <div id="error" class="err"></div>
+    </section>
 
-        <div class="divider"></div>
+    <section class="card">
+      <div class="k">Assistant</div>
+      <div class="grid">
+        <div><div class="k">Model</div><div id="model" class="v">—</div></div>
+        <div><div class="k">Think</div><div id="think" class="v">—</div></div>
+        <div><div class="k">Context</div><div id="context" class="v">—</div></div>
+        <div><div class="k">Update Mode</div><div id="updateMode" class="v">—</div></div>
+      </div>
+    </section>
 
-        <a href="https://t.me/BorderlandBot" class="cta-button">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14v-3H8v-2h3V9h2v2h3v2h-3v3h-2z"/>
-                <path d="M11 16.17L8.41 13.59 7 15l5 5 5-5-1.41-1.41L13 16.17V8h-2v8.17z"/>
-            </svg>
-            Enter the Borderland
-        </a>
+    <section class="card">
+      <div class="k">System</div>
+      <div class="grid">
+        <div><div class="k">OpenClaw</div><div id="version" class="v">—</div></div>
+        <div><div class="k">Gateway</div><div id="gateway" class="v">—</div></div>
+        <div><div class="k">Latency</div><div id="latency" class="v">—</div></div>
+        <div><div class="k">Security</div><div id="security" class="v">—</div></div>
+      </div>
+    </section>
 
-        <div class="footer">
-            "The house remembers everything. Even the things you wish to forget."
-        </div>
-    </div>
+    <section class="card">
+      <div class="k">Agents</div>
+      <div class="grid" style="margin-bottom: 6px;">
+        <div><div class="k">Total Agents</div><div id="agentTotal" class="v">—</div></div>
+        <div><div class="k">Total Sessions</div><div id="sessionTotal" class="v">—</div></div>
+      </div>
+      <div id="agentRows"></div>
+    </section>
+
+    <section class="foot">
+      Redacted by design: tokens, chat/user IDs, session IDs, filesystem paths, private IPs, and secrets are excluded.
+      Ask ButlerBot in Telegram to publish a new snapshot.
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function fmtNum(v) {
+      if (v === null || v === undefined || Number.isNaN(v)) return '—';
+      return Number(v).toLocaleString();
+    }
+
+    function setError(text) {
+      const el = $('error');
+      if (!text) {
+        el.style.display = 'none';
+        el.textContent = '';
+        return;
+      }
+      el.style.display = 'block';
+      el.textContent = text;
+    }
+
+    function render(data) {
+      $('generated').textContent = `Snapshot: ${new Date(data.generatedAt).toLocaleString()} (manual updates)`;
+
+      $('model').textContent = data.assistant?.model ?? '—';
+      $('think').textContent = data.assistant?.think ?? '—';
+      const ctx = data.assistant?.context || {};
+      $('context').textContent = `${fmtNum(ctx.usedTokens)} / ${fmtNum(ctx.limitTokens)} (${ctx.percentUsed ?? '—'}%)`;
+      $('updateMode').textContent = data.updateMode === 'manual-request-only' ? 'Manual only' : (data.updateMode ?? '—');
+
+      $('version').textContent = data.system?.openclawVersion ?? '—';
+      const gw = data.system?.gateway || {};
+      $('gateway').innerHTML = gw.reachable ? '<span class="ok">Reachable</span>' : '<span class="bad">Unavailable</span>';
+      $('latency').textContent = gw.latencyMs != null ? `${gw.latencyMs} ms` : '—';
+
+      const sec = data.system?.security || {};
+      $('security').innerHTML = `<span class="bad">C ${sec.critical ?? '—'}</span> · <span class="warn">W ${sec.warn ?? '—'}</span> · <span class="muted">I ${sec.info ?? '—'}</span>`;
+
+      $('agentTotal').textContent = fmtNum(data.agents?.total);
+      $('sessionTotal').textContent = fmtNum(data.agents?.totalSessions);
+
+      const rows = $('agentRows');
+      rows.innerHTML = '';
+      (data.agents?.items || []).forEach((a) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `
+          <div><strong>${a.id}</strong></div>
+          <div class="pill">${fmtNum(a.sessions)} sessions</div>
+          <div class="muted">${a.lastActive || 'unknown'}</div>
+        `;
+        rows.appendChild(row);
+      });
+    }
+
+    async function loadSnapshot(cacheBust = false) {
+      setError('');
+      const url = cacheBust ? `status.json?t=${Date.now()}` : 'status.json';
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        render(data);
+      } catch (err) {
+        setError(`Could not load status.json (${err.message}). Ask ButlerBot to publish a new snapshot.`);
+      }
+    }
+
+    $('reloadBtn').addEventListener('click', () => loadSnapshot(true));
+    loadSnapshot(false);
+  </script>
 </body>
 </html>
