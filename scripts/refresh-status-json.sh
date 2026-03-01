@@ -12,19 +12,38 @@ openclaw status --json > "${TMP_JSON}"
 
 sanitize_text() {
   local text="$1"
+  text="$(echo "${text}" | sed -E 's#`##g')"
   text="$(echo "${text}" | sed -E 's#/home/[A-Za-z0-9._/-]+#<path-redacted>#g')"
+  text="$(echo "${text}" | sed -E 's#([0-9]{1,3}\.){3}[0-9]{1,3}#<ip-redacted>#g')"
+  text="$(echo "${text}" | sed -E 's#agent:[^ ]+#<session-redacted>#g')"
   text="$(echo "${text}" | sed -E 's/[[:space:]]+/ /g; s/^ +| +$//g')"
   echo "${text}"
+}
+
+lines_to_json_array() {
+  local file="$1"
+  if [ ! -s "${file}" ]; then
+    echo '[]'
+  else
+    jq -Rsc 'split("\n") | map(select(length>0))' < "${file}"
+  fi
 }
 
 build_project_statuses() {
   : > "${TMP_PROJECT_LINES}"
 
-  while IFS=$'\t' read -r agent_id workspace; do
+  while IFS=$'\t' read -r agent_id workspace age_ms; do
     [ -n "${agent_id}" ] || continue
 
     local project=""
-    local status=""
+    local summary=""
+
+    local pending_tmp
+    local completed_tmp
+    local issues_tmp
+    pending_tmp="$(mktemp)"
+    completed_tmp="$(mktemp)"
+    issues_tmp="$(mktemp)"
 
     if [ -f "${workspace}/PROJECT_PLAN.md" ]; then
       local heading
@@ -32,46 +51,116 @@ build_project_statuses() {
       project="$(echo "${heading}" | sed -E 's/^#\s*PROJECT_PLAN\.md\s*[—-]\s*//; s/^#\s*//')"
       [ -n "${project}" ] || project="$(basename "${workspace}")"
 
-      local line
-      line="$(grep -m1 '^- \[~\]' "${workspace}/PROJECT_PLAN.md" || true)"
-      if [ -z "${line}" ]; then
-        line="$(grep -m1 '^- \[ \]' "${workspace}/PROJECT_PLAN.md" || true)"
-      fi
-      if [ -z "${line}" ]; then
-        line="$(grep -m1 '^- \[x\]' "${workspace}/PROJECT_PLAN.md" || true)"
-      fi
-      status="$(echo "${line}" | sed -E 's/^- \[[x~ ]\]\s*//')"
-      [ -n "${status}" ] || status="Project plan present"
+      grep -E '^- \[( |~)\]' "${workspace}/PROJECT_PLAN.md" \
+        | sed -E 's/^- \[[ ~]\]\s*//' \
+        | awk 'NF && !seen[$0]++' \
+        | head -n 3 > "${pending_tmp}" || true
+
+      grep -E '^- \[x\]|^- ✅|^- [0-9]{4}-[0-9]{2}-[0-9]{2}:' "${workspace}/PROJECT_PLAN.md" \
+        | sed -E 's/^- \[x\]\s*//; s/^- ✅\s*//' \
+        | awk 'NF && !seen[$0]++' \
+        | head -n 3 > "${completed_tmp}" || true
+
+      grep -Ei 'missing|blocked|constraint|risk|warning|issue|failed|error' "${workspace}/PROJECT_PLAN.md" \
+        | sed -E 's/^#+\s*//' \
+        | awk 'NF && !seen[$0]++' \
+        | head -n 3 > "${issues_tmp}" || true
+
+      summary="$(head -n 1 "${pending_tmp}" || true)"
+      [ -n "${summary}" ] || summary="$(head -n 1 "${completed_tmp}" || true)"
+      [ -n "${summary}" ] || summary="Project plan present"
     else
       case "${agent_id}" in
         main)
           project="OpenClaw Operations"
-          status="Running control panel + manual Git page snapshot updates"
+          summary="Operating command/control and manual status publishing"
+          cat > "${pending_tmp}" <<'EOF'
+Publish fresh Git page snapshot when requested
+Keep agent control panel concise and redacted
+Watch service-config health warning
+EOF
+          cat > "${completed_tmp}" <<'EOF'
+Control panel moved to compact dark mobile layout
+Manual-update-only snapshot pipeline implemented
+Per-agent project section added to top of page
+EOF
+          cat > "${issues_tmp}" <<'EOF'
+Gateway service currently tied to NVM Node path (upgrade fragility)
+EOF
           ;;
         socialbot)
           project="Social Automation"
-          status="Monitoring social workflow; no single PROJECT_PLAN.md in workspace"
+          summary="Social workflow monitoring and content planning support"
+          cat > "${pending_tmp}" <<'EOF'
+Track campaign briefs and posting windows
+Maintain project/task notes in workspace
+Surface approvals needed before posting
+EOF
+          cat > "${completed_tmp}" <<'EOF'
+Agent delegation directive added for heavy tasks
+Socialbot workspace remains active and routable
+EOF
+          cat > "${issues_tmp}" <<'EOF'
+No consolidated PROJECT_PLAN.md in workspace (status inferred)
+EOF
           ;;
         tkirschbot)
           project="CI4 Development Orchestrator"
-          status="Template/orchestration agent baseline active"
+          summary="Template/orchestration baseline active"
+          cat > "${pending_tmp}" <<'EOF'
+Define active target app milestone for next build cycle
+Capture concrete task list in PROJECT_PLAN.md for richer tracking
+EOF
+          cat > "${completed_tmp}" <<'EOF'
+CI4 orchestrator baseline and workflow docs are present
+EOF
+          cat > "${issues_tmp}" <<'EOF'
+Status inferred from README because PROJECT_PLAN.md missing at workspace root
+EOF
           ;;
         *)
           project="$(echo "${agent_id}" | tr '[:lower:]' '[:upper:]')"
-          status="No PROJECT_PLAN.md found; status inferred from workspace baseline"
+          summary="Baseline workspace detected"
+          cat > "${pending_tmp}" <<'EOF'
+Establish explicit PROJECT_PLAN.md for this agent
+EOF
+          : > "${completed_tmp}"
+          cat > "${issues_tmp}" <<'EOF'
+No PROJECT_PLAN.md found; project status is inferred
+EOF
           ;;
       esac
     fi
 
+    if [[ "${age_ms}" =~ ^[0-9]+$ ]] && [ "${age_ms}" -gt 604800000 ]; then
+      local stale_days=$(( age_ms / 86400000 ))
+      echo "No recent agent activity (${stale_days}d)." >> "${issues_tmp}"
+    fi
+
+    # sanitize + de-dup + cap per section
+    awk 'NF && !seen[$0]++' "${pending_tmp}" | head -n 3 | while IFS= read -r line; do sanitize_text "${line}"; done > "${pending_tmp}.clean"
+    awk 'NF && !seen[$0]++' "${completed_tmp}" | head -n 3 | while IFS= read -r line; do sanitize_text "${line}"; done > "${completed_tmp}.clean"
+    awk 'NF && !seen[$0]++' "${issues_tmp}" | head -n 3 | while IFS= read -r line; do sanitize_text "${line}"; done > "${issues_tmp}.clean"
+
+    local pending_json completed_json issues_json
+    pending_json="$(lines_to_json_array "${pending_tmp}.clean")"
+    completed_json="$(lines_to_json_array "${completed_tmp}.clean")"
+    issues_json="$(lines_to_json_array "${issues_tmp}.clean")"
+
     project="$(sanitize_text "${project}")"
-    status="$(sanitize_text "${status}")"
+    summary="$(sanitize_text "${summary}")"
 
     jq -nc \
       --arg id "${agent_id}" \
       --arg project "${project}" \
-      --arg status "${status}" \
-      '{id:$id, project:$project, status:$status}' >> "${TMP_PROJECT_LINES}"
-  done < <(jq -r '.agents.agents[] | [.id, .workspaceDir] | @tsv' "${TMP_JSON}")
+      --arg summary "${summary}" \
+      --argjson pending "${pending_json}" \
+      --argjson completed "${completed_json}" \
+      --argjson issues "${issues_json}" \
+      '{id:$id, project:$project, summary:$summary, pending:$pending, completed:$completed, issues:$issues}' >> "${TMP_PROJECT_LINES}"
+
+    rm -f "${pending_tmp}" "${completed_tmp}" "${issues_tmp}" "${pending_tmp}.clean" "${completed_tmp}.clean" "${issues_tmp}.clean"
+  done < <(jq -r '.agents.agents[] | [.id, .workspaceDir, (.lastActiveAgeMs|tostring)] | @tsv' "${TMP_JSON}")
 
   jq -s 'sort_by(.id)' "${TMP_PROJECT_LINES}" > "${TMP_PROJECTS}"
 }

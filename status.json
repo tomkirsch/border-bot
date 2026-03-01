@@ -1,6 +1,6 @@
 {
   "schema": "border-bot-status-v1",
-  "generatedAt": "2026-03-01T16:19:14Z",
+  "generatedAt": "2026-03-01T16:25:59Z",
   "updateMode": "manual-request-only",
   "redaction": {
     "note": "Sensitive fields removed before publish.",
@@ -18,9 +18,9 @@
     "model": "gpt-5.3-codex",
     "think": "high",
     "context": {
-      "usedTokens": 90758,
+      "usedTokens": 126034,
       "limitTokens": 272000,
-      "percentUsed": 33
+      "percentUsed": 46
     }
   },
   "projects": {
@@ -28,27 +28,89 @@
       {
         "id": "fernaldbot",
         "project": "Fernald State School Website - Project Plan",
-        "status": "Audit current routing, controllers, and views for redesign impact"
+        "summary": "Audit current routing, controllers, and views for redesign impact",
+        "pending": [
+          "Audit current routing, controllers, and views for redesign impact",
+          "Tweak and expand /design as hidden temporary style guide (first active task)",
+          "Add hero text style switcher prototype on home page (5 contrasting text-shadow/glow variants over photo)"
+        ],
+        "completed": [
+          "Establish working mode on shared fernaldstate source (direct edits; concurrent-user caution)",
+          "Confirm front-end architecture split (public custom CSS, manager Bootstrap)",
+          "Completed first-run bootstrap review"
+        ],
+        "issues": [
+          "- Source lives on shared drive //<ip-redacted>/fernaldstate (multi-user risk).",
+          "No recent agent activity (10d)."
+        ]
       },
       {
         "id": "juliabot",
         "project": "Solis CI4 Rebuild",
-        "status": "Configure environment and DB connectivity (`website/.env` created; DB values pending)"
+        "summary": "Configure environment and DB connectivity (website/.env created; DB values pending)",
+        "pending": [
+          "Configure environment and DB connectivity (website/.env created; DB values pending)",
+          "Port core domain features (navigation map + CI4 route skeleton + bold minimal baseline complete)",
+          "Admin/auth and operational tooling"
+        ],
+        "completed": [
+          "Initialize CI4 app in website/ (CI4 v4.7.0 scaffolded)",
+          "Implement baseline routes/layout (Hello World page + Vite-built assets)",
+          "Define migration/data strategy from existing DB"
+        ],
+        "issues": [
+          "Repo/Path Constraint"
+        ]
       },
       {
         "id": "main",
         "project": "OpenClaw Operations",
-        "status": "Running control panel + manual Git page snapshot updates"
+        "summary": "Operating command/control and manual status publishing",
+        "pending": [
+          "Publish fresh Git page snapshot when requested",
+          "Keep agent control panel concise and redacted",
+          "Watch service-config health warning"
+        ],
+        "completed": [
+          "Control panel moved to compact dark mobile layout",
+          "Manual-update-only snapshot pipeline implemented",
+          "Per-agent project section added to top of page"
+        ],
+        "issues": [
+          "Gateway service currently tied to NVM Node path (upgrade fragility)"
+        ]
       },
       {
         "id": "socialbot",
         "project": "Social Automation",
-        "status": "Monitoring social workflow; no single PROJECT_PLAN.md in workspace"
+        "summary": "Social workflow monitoring and content planning support",
+        "pending": [
+          "Track campaign briefs and posting windows",
+          "Maintain project/task notes in workspace",
+          "Surface approvals needed before posting"
+        ],
+        "completed": [
+          "Agent delegation directive added for heavy tasks",
+          "Socialbot workspace remains active and routable"
+        ],
+        "issues": [
+          "No consolidated PROJECT_PLAN.md in workspace (status inferred)"
+        ]
       },
       {
         "id": "tkirschbot",
         "project": "CI4 Development Orchestrator",
-        "status": "Template/orchestration agent baseline active"
+        "summary": "Template/orchestration baseline active",
+        "pending": [
+          "Define active target app milestone for next build cycle",
+          "Capture concrete task list in PROJECT_PLAN.md for richer tracking"
+        ],
+        "completed": [
+          "CI4 orchestrator baseline and workflow docs are present"
+        ],
+        "issues": [
+          "Status inferred from README because PROJECT_PLAN.md missing at workspace root"
+        ]
       }
     ]
   },
@@ -58,7 +120,7 @@
     "gateway": {
       "mode": "local",
       "reachable": true,
-      "latencyMs": 68,
+      "latencyMs": 113,
       "serviceState": "running"
     },
     "security": {
@@ -84,12 +146,12 @@
       {
         "id": "main",
         "sessions": 8,
-        "lastActive": "4m ago"
+        "lastActive": "2m ago"
       },
       {
         "id": "socialbot",
         "sessions": 5,
-        "lastActive": "9m ago"
+        "lastActive": "16m ago"
       },
       {
         "id": "tkirschbot",

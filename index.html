@@ -27,7 +27,7 @@
     }
 
     .wrap {
-      max-width: 760px;
+      max-width: 780px;
       margin: 0 auto;
       padding: 12px;
       display: grid;
@@ -86,8 +86,20 @@
 
     .row:last-child { border-bottom: 0; }
 
-    .project-row {
-      grid-template-columns: 92px 1fr;
+    .pm-card {
+      border: 1px solid #1a2532;
+      border-radius: 10px;
+      padding: 8px;
+      margin-top: 8px;
+      background: #0f151f;
+    }
+
+    .pm-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 6px;
     }
 
     .agent-tag {
@@ -96,7 +108,7 @@
       background: #172331;
       border: 1px solid #27405a;
       border-radius: 8px;
-      padding: 4px 6px;
+      padding: 3px 6px;
       text-align: center;
       font-weight: 700;
       text-transform: lowercase;
@@ -108,11 +120,42 @@
       color: #e5eef8;
     }
 
-    .p-status {
-      margin-top: 2px;
+    .p-summary {
       font-size: 12px;
       color: #bdd0e5;
+      margin: 2px 0 6px;
     }
+
+    .pm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .pm-col {
+      border: 1px solid #1a2532;
+      background: #0b1119;
+      border-radius: 8px;
+      padding: 6px;
+    }
+
+    .pm-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+
+    .pm-col ul {
+      margin: 0;
+      padding-left: 16px;
+      font-size: 11px;
+      color: #d0dfef;
+    }
+
+    .pm-col li { margin-bottom: 4px; }
+    .pm-col li:last-child { margin-bottom: 0; }
 
     .muted { color: var(--muted); }
     .ok { color: var(--ok); }
@@ -135,10 +178,9 @@
       margin-top: 8px;
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 640px) {
       .grid { grid-template-columns: 1fr; }
-      .project-row { grid-template-columns: 1fr; }
-      .agent-tag { width: fit-content; }
+      .pm-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -198,6 +240,21 @@
       return Number(v).toLocaleString();
     }
 
+    function esc(v) {
+      return String(v ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function listHtml(arr, emptyText, liClass = '') {
+      const safe = (Array.isArray(arr) ? arr : []).filter(Boolean);
+      if (!safe.length) return `<ul><li class="${liClass}">${esc(emptyText)}</li></ul>`;
+      return `<ul>${safe.map((x) => `<li class="${liClass}">${esc(x)}</li>`).join('')}</ul>`;
+    }
+
     function setError(text) {
       const el = $('error');
       if (!text) {
@@ -219,16 +276,30 @@
       }
 
       list.forEach((p) => {
-        const row = document.createElement('div');
-        row.className = 'row project-row';
-        row.innerHTML = `
-          <div class="agent-tag">${p.id}</div>
-          <div>
-            <div class="p-name">${p.project || 'Unknown project'}</div>
-            <div class="p-status">${p.status || 'No status'}</div>
+        const card = document.createElement('div');
+        card.className = 'pm-card';
+        card.innerHTML = `
+          <div class="pm-head">
+            <span class="agent-tag">${esc(p.id)}</span>
+            <span class="p-name">${esc(p.project || 'Unknown project')}</span>
+          </div>
+          <div class="p-summary">${esc(p.summary || 'No summary available')}</div>
+          <div class="pm-grid">
+            <div class="pm-col">
+              <div class="pm-title">Pending</div>
+              ${listHtml(p.pending, 'No pending items listed')}
+            </div>
+            <div class="pm-col">
+              <div class="pm-title">Recently Completed</div>
+              ${listHtml(p.completed, 'No recent completions listed')}
+            </div>
+            <div class="pm-col">
+              <div class="pm-title">Issues / Watch</div>
+              ${listHtml(p.issues, 'No active issues noted', 'warn')}
+            </div>
           </div>
         `;
-        rows.appendChild(row);
+        rows.appendChild(card);
       });
     }
 
@@ -261,9 +332,9 @@
         row.className = 'row';
         row.style.gridTemplateColumns = '1fr auto auto';
         row.innerHTML = `
-          <div><strong>${a.id}</strong></div>
+          <div><strong>${esc(a.id)}</strong></div>
           <div class="muted">${fmtNum(a.sessions)} sessions</div>
-          <div class="muted">${a.lastActive || 'unknown'}</div>
+          <div class="muted">${esc(a.lastActive || 'unknown')}</div>
         `;
         rows.appendChild(row);
       });
